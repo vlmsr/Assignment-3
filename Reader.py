@@ -196,18 +196,43 @@ def load_data(filename, extension, algorithm):
 
 class BN(object):
     def __init__(self):
-        self.name='default'
-        self.num_nodes=0
-    def addNode(self,nodeid,name,values,alias,parents):
-        # something
-        self.node.append(Node(name,values,alias,parents))
-        self.node[-1].nodeid=nodeid  # TODO check if necessary
+        self.__name='default'
+        self.__num_nodes=0
+        self.__node=[]
+    def addNode(self,node_id,name,values,alias,parents):
+        self.__node.append(Node(name,values,alias,parents))
+        self.__node[-1].node_id=node_id  # TODO check if necessary
 
 class Node(object):
     def __init__(self,name,values,alias,parents):
-        self.name=name
-        self.values=values
-        self.alias=alias
-        self.parents=parents
-        self.nodeid=-1
+        self.__name=name
+        self.__values=values
+        self.__alias=alias
+        self.__parents=parents
+        self.__children=[]
+        self.__id=-1
+        self.__prob_table=[[], []]  # initialize empty table
 
+    def create_table(self, raw_table):
+        for i in range(len(raw_table)):
+            if i%2 > 0:
+                self.__prob_table[0].append=raw_table[i]
+            else:
+                self.__prob_table[1].append=raw_table[i]
+
+    def update(self,parents,children):
+        # TODO update - still not sure how to do it
+    def def_id(self, new_id):
+        self.__id=new_id
+    def get_name(self):
+        return self.__name
+    def get_parents(self):
+        return self.__parents
+    def get_children(self):
+        return self.__children
+    def get_id(self):
+        return self.__id
+    def get_table(self):
+        return self.__prob_table
+    def get_alias(self):
+        return self.__alias
