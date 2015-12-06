@@ -1,4 +1,4 @@
-
+#  TODO use Python String find() method
 def fileReader(fileName, extension):
     """
     Reads DIMACS formatted files and returns a knowledge base and its parameters
@@ -112,7 +112,6 @@ def find_word(var, word, start):
     return []
 
 
-
 def write_file(filename, extension, algorithm, data):
     """
     Writes data to file using the DIMACS format
@@ -143,7 +142,6 @@ def write_file(filename, extension, algorithm, data):
     output.close()
     print(filename+' saved!')
 
-
 def save_data(filename, extension, algor, data):
     filename = 'sol_'+filename+extension
     output = open(filename, 'a')  # open file for appending
@@ -153,7 +151,6 @@ def save_data(filename, extension, algor, data):
     output.write(line+'\n')  # end with 0
     output.close()
     print('File saved')
-
 
 def load_data(filename, extension, algorithm):
     filename = filename+extension
@@ -194,6 +191,41 @@ def load_data(filename, extension, algorithm):
     return loaddata
 
 
+def variable_elimination(factors, elim_vars, ordering):
+    #  TODO initial draft for the variable elimination function
+    for i in range(len(elim_vars)):
+        factors=sum_prod_elim(factors, elim_vars[ordering[i]])
+    product=factors[0]
+    if len(factors)>1:  # TODO shall we keep this condition? It will hide possible errors, difficult debugging!
+        for factor in factors:  # TODO check
+            product=table_product(product,factor)
+    return product
+
+def sum_prod_elim(factors, elim_var):
+    [elim_factors, indices]=find_dependent(factors, elim_var)  # TODO define as a method of factors
+    indices.sort()  # TODO this might not be needed if the indices already come ordered
+    for i in indices:
+        factors.pop(i)
+    new_factor=elim_factors[0]
+    for factor in elim_factors:  # product of factors to eliminate
+        new_factor = table_product(new_factor, factor)
+    new_factor = marginalize(new_factor, elim_var)
+    if not find_equal(factors, new_factor)
+        return factors+new_factor  # TODO check concatenation method
+    else
+        return factors
+
+def table_product(factor_1, factor_2):
+    dependent = find_equal(factor_1.get_vars(), factor_2.get_vars())
+    for i in range(len(factor_1.table[0])):
+        for j in range(len(factor_2.table[0])):
+            if factor_2.table[0][j].find(factor_1.table[0][i]):
+                factor_1.table[1][i]=factor_1.table[1][i]*factor_2.table[1][j]  # TODO verify what to do with non-dependent vars during multiplication process!
+                factor_1.table[0][i]=list(set(factor_1.table[1][i]+factor_2.table[1][j]))
+
+# TODO table[0] has the variable instance strings; table[1] corresponds to the probability values
+# TODO define: table_product(), find_dependent(), find_equal(), marginalize()
+# TODO find_equal() must be able to accept both inputs as lists of strings, not just one list and a string
 class BN(object):
     def __init__(self):
         self.__name='default'
