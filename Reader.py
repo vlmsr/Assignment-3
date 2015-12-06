@@ -193,29 +193,30 @@ def load_data(filename, extension, algorithm):
     return loaddata
 
 
-def variable_elimination(factors, elim_vars, ordering):
+def variable_elimination(factors, elim_vars):
     #  TODO initial draft for the variable elimination function
     for i in range(len(elim_vars)):
-        factors=sum_prod_elim(factors, elim_vars[ordering[i]])
-    product=factors[0]
+        factors=sum_prod_elim(factors, elim_vars[i])
+    """product=factors[0]
     if len(factors)>1:  # TODO shall we keep this condition? It will hide possible errors, difficult debugging!
         for factor in factors:  # TODO check
             product=table_product(product,factor)
-    return product
+    return product"""
+    # TODO verify if elim_vars were eliminated
+    return factors
 
 def sum_prod_elim(factors, elim_var):
     [elim_factors, indices]=find_dependent(factors, elim_var)  # TODO define as a method of factors
-    indices.sort()  # TODO this might not be needed if the indices already come ordered
+    indices.sort(reverse=True)  # sort in descending order
     for i in indices:
-        factors.pop(i)
+        factors.pop(i)  # eliminate factors to join
     new_factor=elim_factors[0]
-    for factor in elim_factors:  # product of factors to eliminate
-        new_factor = table_product(new_factor, factor)
+    if len(elim_factors)>1:
+        for factor in elim_factors[1:]:  # product of factors to eliminate
+            new_factor = table_product(new_factor, factor)
     new_factor = marginalize(new_factor, elim_var)
-    if not find_equal(factors, new_factor)
-        return factors+new_factor  # TODO check concatenation method
-    else
-        return factors
+    return factors+new_factor  # TODO check concatenation method
+
 
 def no_rep(list_in):
     # remove repeated entries in list
@@ -223,11 +224,30 @@ def no_rep(list_in):
 
 def table_product(factor_1, factor_2):
     dependent = find_equal(factor_1.get_vars(), factor_2.get_vars(),'ind')  # TODO revise find_equal output
+    # TODO indices=something
     new_factor = Factor('prod', no_rep(factor_1.get_vars() + factor_2.getvars()))
-    for i in range(len(factor_1.get_table()[1])):
-        for j in range(len(factor_2.get_table()[1])):
+    table_1=factor_1.get_table()
+    table_2=factor_2.get_table()
+    found=True
+    for line1 in range(len(table_1[1])):
+        assign1=table_1[0][line1]
+        prob1=table_1[1][line1]
+        for line2 in range(len(table_2[1])):
+            assign2=table_1[0][line2]
+            prob2=table_1[1][line2]
+            if [line1[i] for i in indices[0]] == [line2[j] for j in indices[1]]:
+                new_table[0].append(no_rep(line1+line2))
+                new_table[1].append(no_rep(line1+line2))
+
+
             for d in range(len(dependent)):
-                if factor_1.get_vars()[dependent[d][0]]==factor_2.get_vars()[dependent[d][1]]:
+                if factor_1.get_vars()[dependent[d][0]]!=factor_2.get_vars()[dependent[d][1]]:
+                    found=False
+                else:
+
+
+            if found:
+
                     new_table[0].append(no_rep(factor_1.get_table()[0][i] * factor_2.get_table()[0][j]))
                     new_table[1].append(factor_1.get_table()[1][i]*factor_2.get_table()[1][j])
 
