@@ -236,44 +236,53 @@ def marginalize(factor, elim_var):
 
 def no_rep(list_in):
     # remove repeated entries in list
-    return list(set(list_in))
+    list_out=[]
+    for i in list_in:
+       if i not in list_out:
+          list_out.append(i)
+    return list_out
+
+def find_equal(list1, list2, type):
+    """
+    Finds matching elements in both lists and returns either a list of matched elements or a list of indices
+    :param list1: first list to compare
+    :param list2: second list to compare
+    :param type: if ind='ind' is specified, the function returns matched indices instead of matched elements
+    :return: list of matched elements or list of indices, depending on the 'ind' parameter
+    """
+    if type=='ind':
+        indices=[[],[]]
+        for i in range(len(list1)):
+            for j in range(len(list2)):
+                if list1[i]==list2[j]:
+                    indices[0].append(i)
+                    indices[1].append(j)
+        return indices
+    else:
+        list_out=[]
+        for i in range(len(list1)):
+            for j in range(len(list2)):
+                if list1[i]==list2[j]:
+                    list_out.append(list1[i])
+        return list_out
 
 def table_product(factor_1, factor_2):
-    dependent = find_equal(factor_1.get_vars(), factor_2.get_vars(),'ind')  # TODO revise find_equal output
-    # TODO indices=something
+    dependent = find_equal(factor_1.get_vars(), factor_2.get_vars(),'ind')  # return matched indices
     new_factor = Factor('prod', no_rep(factor_1.get_vars() + factor_2.getvars()))
     table_1=factor_1.get_table()
     table_2=factor_2.get_table()
-    found=True
+    new_table=[[],[]]
     for line1 in range(len(table_1[1])):
         assign1=table_1[0][line1]
         prob1=table_1[1][line1]
         for line2 in range(len(table_2[1])):
             assign2=table_1[0][line2]
             prob2=table_1[1][line2]
-            if [line1[i] for i in indices[0]] == [line2[j] for j in indices[1]]:
-                new_table[0].append(no_rep(line1+line2))
-                new_table[1].append(no_rep(line1+line2))
-
-
-            for d in range(len(dependent)):
-                if factor_1.get_vars()[dependent[d][0]]!=factor_2.get_vars()[dependent[d][1]]:
-                    found=False
-                else:
-
-
-            if found:
-
-                    new_table[0].append(no_rep(factor_1.get_table()[0][i] * factor_2.get_table()[0][j]))
-                    new_table[1].append(factor_1.get_table()[1][i]*factor_2.get_table()[1][j])
-
-                    # TODO CONTINUE HERE!!!!!!
-
-
-            if factor_2.get_table()[0][j].find(factor_1.get_table()[0][i]):
-                new_factor.table[1][i]=factor_1.table[1][i]*factor_2.table[1][j]  # TODO verify what to do with non-dependent vars during multiplication process!
-                new_factor.table[0][i]=list(set(factor_1.table[1][i]+factor_2.table[1][j]))
-    return factor_1
+            if [assign1[i] for i in dependent[0]] == [assign2[j] for j in dependent[1]]:
+                new_table[0].append(no_rep(assign1+assign2))
+                new_table[1].append(prob1*prob2)
+    new_factor.fill_table(new_table)
+    return new_factor
 # TODO table[0] has the variable instance strings; table[1] corresponds to the probability values
 # TODO define: table_product(), find_dependent(), find_equal(), marginalize()
 # TODO find_equal() must be able to accept both inputs as lists of strings, not just one list and a string
