@@ -326,6 +326,13 @@ class Factor(object):
         self.__prob_table=deepcopy(in_table)
     """def update(self,parents,children):
         # TODO update - still not sure how to do it"""
+    def eliminate(self,var):
+        var_ind=self.__var.index(var)
+        self.__var.pop(var_ind)
+        for i in range(len(self.__prob_table[0])):
+            self.__prob_table[0][i].pop(var_ind)
+        # TODO don't forget to test!
+
     def get_description(self):
         return self.__description
     def get_vars(self):
@@ -334,4 +341,4 @@ class Factor(object):
         return self.__prob_table
 
     # TODO debugging table
-    #in_table=[[['t','t','t','f','f','f'],['x','y','z','x','y','z']],[0.9,0.3,0.4,0.1,0.7,0.6]]
+    #in_table=[[['t','x'],['t','y'],['t','z'],['f','x'],['f','y'],['f','z']],[0.9,0.3,0.4,0.1,0.7,0.6]]
