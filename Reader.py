@@ -217,6 +217,23 @@ def sum_prod_elim(factors, elim_var):
     new_factor = marginalize(new_factor, elim_var)
     return factors+new_factor  # TODO check concatenation method
 
+def marginalize(factor, elim_var):
+    """
+    Marginalize Variable elim_var
+    :param factor: Factor to make changes
+    :param elim_var: Variable to Eliminate
+    :return: Updated Factor
+    """
+    factor.eliminate(elim_var)
+    new_table=[[],[]]
+    table = factor.get_table()
+    for line in range(len(table[0])):
+        for line1 in range(len(table[0])):
+            if line != line1 and table[0][line]== table[0][line1]:
+                new_table[0].append(table[0][line])
+                new_table[1].append(table[1][line]+table[1][line1])
+    factor.fill_table(new_table)
+    return factor
 
 def no_rep(list_in):
     # remove repeated entries in list
