@@ -222,7 +222,7 @@ def table_product(factor_1, factor_2):
             if factor_2.table[0][j].find(factor_1.table[0][i]):
                 factor_1.table[1][i]=factor_1.table[1][i]*factor_2.table[1][j]  # TODO verify what to do with non-dependent vars during multiplication process!
                 factor_1.table[0][i]=list(set(factor_1.table[1][i]+factor_2.table[1][j]))
-
+    return factor_1
 # TODO table[0] has the variable instance strings; table[1] corresponds to the probability values
 # TODO define: table_product(), find_dependent(), find_equal(), marginalize()
 # TODO find_equal() must be able to accept both inputs as lists of strings, not just one list and a string
