@@ -1,0 +1,57 @@
+VAR
+name Uniform
+alias U
+values T F
+
+VAR
+name Victor
+alias V
+values T F
+
+VAR
+name Whiskey
+alias W
+values T F
+
+VAR
+name X-ray
+alias X
+parents U Victor
+values T F
+
+VAR
+name Yankee
+alias Y
+parents V Whiskey
+values T F
+
+VAR
+name Zulu
+alias Z
+parents X-ray Y
+values T F
+
+CPT
+var U
+table t 0.004 f 0.996
+
+CPT
+var V
+table t 0.003 f 0.997
+
+CPT
+var W
+table t 0.999 f 0.001
+
+CPT
+var X
+table t t t 0.63 t t f 0.74 t f t 0.87 t f f 0.69 f t t 0.37 f t f 0.26 f f t 0.13 f f f 0.31
+
+
+CPT
+var Y
+table t t t 0.4 t t f 0.3 t f t 0.2 t f f 0.1 f t t 0.6 f t f 0.7 f f t 0.8 f f f 0.9
+
+CPT
+var Z
+table t t t 0.7 t t f 0.8 t f t 0.9 t f f 0.09 f t t 0.3 f t f 0.2 f f t 0.1 f f f 0.91
