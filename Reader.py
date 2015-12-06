@@ -1,4 +1,6 @@
 #  TODO use Python String find() method
+from copy import deepcopy
+
 def fileReader(fileName, extension):
     """
     Reads DIMACS formatted files and returns a knowledge base and its parameters
@@ -215,13 +217,26 @@ def sum_prod_elim(factors, elim_var):
     else
         return factors
 
+def no_rep(list_in):
+    # remove repeated entries in list
+    return list(set(list_in))
+
 def table_product(factor_1, factor_2):
-    dependent = find_equal(factor_1.get_vars(), factor_2.get_vars())
-    for i in range(len(factor_1.table[0])):
-        for j in range(len(factor_2.table[0])):
-            if factor_2.table[0][j].find(factor_1.table[0][i]):
-                factor_1.table[1][i]=factor_1.table[1][i]*factor_2.table[1][j]  # TODO verify what to do with non-dependent vars during multiplication process!
-                factor_1.table[0][i]=list(set(factor_1.table[1][i]+factor_2.table[1][j]))
+    dependent = find_equal(factor_1.get_vars(), factor_2.get_vars(),'ind')  # TODO revise find_equal output
+    new_factor = Factor('prod', no_rep(factor_1.get_vars() + factor_2.getvars()))
+    for i in range(len(factor_1.get_table()[1])):
+        for j in range(len(factor_2.get_table()[1])):
+            for d in range(len(dependent)):
+                if factor_1.get_vars()[dependent[d][0]]==factor_2.get_vars()[dependent[d][1]]:
+                    new_table[0].append(no_rep(factor_1.get_table()[0][i] * factor_2.get_table()[0][j]))
+                    new_table[1].append(factor_1.get_table()[1][i]*factor_2.get_table()[1][j])
+
+                    # TODO CONTINUE HERE!!!!!!
+
+
+            if factor_2.get_table()[0][j].find(factor_1.get_table()[0][i]):
+                new_factor.table[1][i]=factor_1.table[1][i]*factor_2.table[1][j]  # TODO verify what to do with non-dependent vars during multiplication process!
+                new_factor.table[0][i]=list(set(factor_1.table[1][i]+factor_2.table[1][j]))
     return factor_1
 # TODO table[0] has the variable instance strings; table[1] corresponds to the probability values
 # TODO define: table_product(), find_dependent(), find_equal(), marginalize()
@@ -240,17 +255,20 @@ class Node(object):
         self.__name=name
         self.__values=values
         self.__alias=alias
-        self.__parents=parents
+        self.__parents=parents  # parents' alias
         self.__children=[]
         self.__id=-1
         self.__prob_table=[[], []]  # initialize empty table
 
     def create_table(self, raw_table):
-        for i in range(len(raw_table)):
+        """for i in range(len(raw_table)):
             if i%2 > 0:
                 self.__prob_table[0].append=raw_table[i]
             else:
-                self.__prob_table[1].append=raw_table[i]
+                self.__prob_table[1].append=raw_table[i]"""
+
+    def fill_table(self, in_table):
+        self.__prob_table=deepcopy(in_table)
 
     def update(self,parents,children):
         # TODO update - still not sure how to do it
@@ -268,3 +286,23 @@ class Node(object):
         return self.__prob_table
     def get_alias(self):
         return self.__alias
+
+class Factor(object):
+    def __init__(self,description,var):
+        self.__description=description
+        self.__var=var
+        self.__prob_table=[[], []]  # initialize empty table
+
+    def fill_table(self, in_table):
+        self.__prob_table=deepcopy(in_table)
+    """def update(self,parents,children):
+        # TODO update - still not sure how to do it"""
+    def get_description(self):
+        return self.__description
+    def get_vars(self):
+        return self.__var
+    def get_table(self):
+        return self.__prob_table
+
+    # TODO debugging table
+    #in_table=[[['t','t','t','f','f','f'],['x','y','z','x','y','z']],[0.9,0.3,0.4,0.1,0.7,0.6]]
