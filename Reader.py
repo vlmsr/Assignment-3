@@ -218,7 +218,20 @@ def sum_prod_elim(factors, elim_var):
     return factors+new_factor  # TODO check concatenation method
 
 def find_dependent(factors, var):
-
+    """
+    Finds factors that depend on the specified variable
+    :param factors: Factor-type objects to search
+    :param var: variable to search for
+    :return: dependent factors (Factor objects list) and indices of dependent factors (list)
+    """
+    dep_factors=[]
+    dep_indices=[]
+    for i in range(len(factors)):
+        ind = find_equal(factors[i], var,'ind')  # return matching indices
+        if ind:
+            dep_factors += factors[ind]  # concatenate matching factors
+            dep_indices += ind
+    return [dep_factors, dep_indices]
 
 def no_rep(list_in):
     # remove repeated entries in list
