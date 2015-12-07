@@ -192,7 +192,6 @@ def load_data(filename, extension, algorithm):
     print(filename+' loaded!')
     return loaddata
 
-
 def variable_elimination(factors, elim_vars):
     #  TODO initial draft for the variable elimination function
     for i in range(len(elim_vars)):
@@ -218,8 +217,6 @@ def sum_prod_elim(factors, elim_var):
     return factors+new_factor  # TODO check concatenation method
 
 def find_dependent(factors, var):
-
-
 def no_rep(list_in):
     # remove repeated entries in list
     list_out=[]
@@ -290,6 +287,21 @@ def marginalize(factor, elim_var):
                 new_table[1].append(table[1][line]+table[1][line1])
     factor.fill_table(new_table)
     return factor
+
+def order(query,evidences,nodes):
+    elim_vars=[]
+    """
+    create list elim_vars of vars that are just Hidden Vars (not Query or Evidence)
+    [[elim_var(i),cost(i)],...]=heuristic(elim_vars)
+    cost_vars.sort(key=lambda x: x[1])
+    for i in elim_vars:
+        elim_vars.append(cost_vars[0].pop(0))
+        cost_vars=heuristic_update(cost_vars)
+
+
+
+    """
+    return elim_vars
 
 class BN(object):
     def __init__(self):
