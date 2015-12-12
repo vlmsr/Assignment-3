@@ -329,20 +329,49 @@ def order(query,evidences,nodes):
     # create list elim_vars of vars that are just Hidden Vars (not Query or Evidence)
     evidence_name=[]
     for evidence in evidences:
-        evidence_name.append(evidence.name)  # list with names of evidence variables
+        evidence_name.append(evidence.get_name())  # list with names of evidence variables
     for node in nodes:
         if not find_equal(query,[node.get_name()],'val'):
             if not find_equal(evidence_name,[node.get_name()],'val'):
                 hidden_vars.append(node)  # add node to list of variables to sort for elimination
-    evaluation = heuristic(hidden_vars, query, evidences)
-    #[[elim_var(i),cost(i)],...]=heuristic(hidden_vars)
+    evaluation = heuristic(hidden_vars, query, evidence_name)
+    #[[elim_var(i),...],[cost(i),...]]=heuristic(hidden_vars)
     evaluation.sort(key=lambda x: x[1])
-    for i in elim_vars:
-        elim_vars.append(evaluation[0].pop(0)) # TODO whaaat - should rename some variables!
-        cost_vars=heuristic_update(evaluation, query, evidence) # TODO what was this?
+    if len(evaluation)>1:
+        evaluation_range=list(range(len(evaluation)-1))  # auxiliary variable
+        for i in evaluation_range:
+            elim_vars.append(evaluation[0].pop(0)) # add best-rated var to the elimination list
+            if evaluation:
+                evaluation=heuristic(evaluation[0], query, evidences) # evaluate heuristic for the new situation
+                evaluation.sort(key=lambda x: x[1])
     return elim_vars
 
-def heuristic(hidden_vars, query, evidences):
+def heuristic(hidden_vars, query, evidence_name):
+    """
+    Computes heuristic costs
+    :param hidden_vars: hidden variables (list of Node objects)
+    :param query: query variable (Node object)
+    :param evidence_name: names of evidence variables (list of strings)
+    :return: list with hidden variables and respective costs
+    """
+    evaluation=[[],[]]
+    for variable in hidden_vars:
+        parents_ev=find_equal(variable.get_parents(),evidence_name,'val')  # parents of 'variable' that are evidence
+        children_ev=find_equal(variable.get_parents(),evidence_name,'val')  # children of 'variable' that are evidence
+        child_parents=[]
+        for child in variable.get_children():
+            for h_var in hidden_vars:
+                if find_equal([child],[h_var],'var'):
+                    child_parents.append(h_var.parents)
+            if find_equal([child],[query],'var'):
+                child_parents.append(query.parents)
+            child_parents=list(set(child_parents))  # remove repeated values
+        valid_neighbors=list(set(variable.get_parents()+parents_ev+variable.get_children()+children_ev+child_parents))
+        cost=len(valid_neighbors)
+        evaluation[0].append(variable)
+        evaluation[1].append(cost)
+    return evaluation
+
 
 class BN(object):
     def __init__(self):
