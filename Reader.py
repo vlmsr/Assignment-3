@@ -334,17 +334,21 @@ def order(query,evidences,nodes):
         if not find_equal(query,[node.get_name()],'val'):
             if not find_equal(evidence_name,[node.get_name()],'val'):
                 hidden_vars.append(node)  # add node to list of variables to sort for elimination
-    evaluation = heuristic(hidden_vars, query, evidences, evidence_name)
+    evaluation = heuristic(hidden_vars, query, evidence_name)
     #[[elim_var(i),...],[cost(i),...]]=heuristic(hidden_vars)
     evaluation.sort(key=lambda x: x[1])
-    for i in elim_vars:
-        elim_vars.append(evaluation[0].pop(0)) # TODO whaaat - should rename some variables!
-        cost_vars=heuristic_update(evaluation, query, evidences) # TODO what was this?
+    if len(evaluation)>1:
+        evaluation_range=list(range(len(evaluation)-1))  # auxiliary variable
+        for i in evaluation_range:
+            elim_vars.append(evaluation[0].pop(0)) # add best-rated var to the elimination list
+            if evaluation:
+                evaluation=heuristic(evaluation[0], query, evidences) # evaluate heuristic for the new situation
+                evaluation.sort(key=lambda x: x[1])
     return elim_vars
 
 def heuristic(hidden_vars, query, evidence_name):
     """
-    Computes initial heuristic costs
+    Computes heuristic costs
     :param hidden_vars: hidden variables (list of Node objects)
     :param query: query variable (Node object)
     :param evidence_name: names of evidence variables (list of strings)
@@ -367,6 +371,7 @@ def heuristic(hidden_vars, query, evidence_name):
         evaluation[0].append(variable)
         evaluation[1].append(cost)
     return evaluation
+
 
 class BN(object):
     def __init__(self):
