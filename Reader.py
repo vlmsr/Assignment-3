@@ -226,7 +226,7 @@ def find_dependent(factors, var):
     dep_factors=[]
     dep_indices=[]
     for i in range(len(factors)):
-        ind = find_equal(factors[i], var,'ind')  # return matching indices
+        ind = find_equal(factors[i], [var],'ind')  # return matching indices
         if ind:
             dep_factors += factors[ind]  # concatenate matching factors
             dep_indices += ind
@@ -304,19 +304,34 @@ def marginalize(factor, elim_var):
     return factor
 
 def order(query,evidences,nodes):
+    """
+    Finds hidden variables (not query or evidence), finds an elimination order according to a heuristic
+     and returns a list of nodes to eliminate, sorted in the chosen order.
+    :param query: query variable (Node object)
+    :param evidences: list of evidence variables (list of Node objects)
+    :param nodes: list of all nodes (list of Node objects)
+    :return: sorted list with an ordering of nodes to eliminate (list of Node objects)
+    """
     elim_vars=[]
-    """
-    create list elim_vars of vars that are just Hidden Vars (not Query or Evidence)
-    [[elim_var(i),cost(i)],...]=heuristic(elim_vars)
-    cost_vars.sort(key=lambda x: x[1])
+    hidden_vars=[]
+    # create list elim_vars of vars that are just Hidden Vars (not Query or Evidence)
+    evidence_name=[]
+    for evidence in evidences:
+        evidence_name.append(evidence.name)  # list with names of evidence variables
+    for node in nodes:
+        if not find_equal(query,[node.get_name()],'val'):
+            if not find_equal(evidence_name,[node.get_name()],'val'):
+                hidden_vars.append(node)  # add node to list of variables to sort for elimination
+    evaluation = heuristic(hidden_vars, query, evidences)
+    #[[elim_var(i),cost(i)],...]=heuristic(hidden_vars)
+    evaluation.sort(key=lambda x: x[1])
     for i in elim_vars:
-        elim_vars.append(cost_vars[0].pop(0))
-        cost_vars=heuristic_update(cost_vars)
-
-
-
-    """
+        elim_vars.append(evaluation[0].pop(0)) # TODO whaaat - should rename some variables!
+        cost_vars=heuristic_update(evaluation, query, evidence) # TODO what was this?
     return elim_vars
+
+def heuristic(hidden_vars, query, evidences):
+
 
 class BN(object):
     def __init__(self):
