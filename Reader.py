@@ -70,7 +70,6 @@ def fileReader(fileName, extension):
     else:
         return KB(-1, -1, -1)  # return error sentence
 
-
 def find_next(var, key, start):  # returns end_cond, w_start (inclusive) and w_end indices (exclusive); key is a string
     """
     Finds the indices where the next word is stored within var
@@ -112,7 +111,6 @@ def find_word(var, word, start):
                 if found==1
                     return [i,letter]
     return []
-
 
 def write_file(filename, extension, algorithm, data):
     """
@@ -202,8 +200,22 @@ def variable_elimination(factors, elim_vars):
             product=table_product(product,factor)
     return product"""
     # TODO verify if elim_vars were eliminated
-    return factors
+    factor=join_normalize(factors)
+    return factor
 
+def join_normalize(factors):
+    new_factor=factors[0]
+    factor=[]
+    if len(factors)>1:
+        for factor in factors[1:]:  # product of factors to join
+            new_factor = table_product(new_factor, factor)
+    new_factor = table_product(new_factor, factor)
+    table=new_factor.get_table()
+    total=sum(table[1])
+    for i in range(len(table[1])):
+        table[1][i]=table[1][i]/total
+    factor=factor.fill_table(table)
+    return factor
 def sum_prod_elim(factors, elim_var):
     [elim_factors, indices]=find_dependent(factors, elim_var)  # TODO define as a method of factors
     indices.sort(reverse=True)  # sort in descending order
@@ -355,7 +367,6 @@ def heuristic(hidden_vars, query, evidence_name):
         evaluation[0].append(variable)
         evaluation[1].append(cost)
     return evaluation
-
 
 class BN(object):
     def __init__(self):
