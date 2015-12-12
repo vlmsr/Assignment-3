@@ -1,194 +1,8 @@
 #  TODO use Python String find() method
 from copy import deepcopy
 
-def fileReader(fileName, extension):
-    """
-    Reads DIMACS formatted files and returns a knowledge base and its parameters
-    :param fileName: name of the file to be read
-    :param extension: extension of the file to be read
-    :return: BN object with clauses, number of clauses and number of variables
-    """
 
-    fileName = fileName+extension
-    input = open(fileName,'r')
-    raw_data = input.readlines()
-    input.close()
-    print('Loading data...')
-
-    err = 0  # error variable
-    clause = []
-    start = 0
-    k = 0  # for iterations over the clauses
-    l = 0  # for iterations over the symbols
-    num_clauses = 0
-    num_vars = 0
-    for i in range(len(raw_data)):
-        j = 0
-        if raw_data[i][j] == '%':
-            if k < num_clauses:
-                print("Warning: Number of clauses does not match data!")
-                for excess in range(k,num_clauses):
-                    clause.pop()
-            break  # finishes clause assignment task
-        elif raw_data[i][j] != 'c':
-            if raw_data[i][j] == 'p':
-                first_ind = j  # saves first index
-                first_ind = raw_data[i].find(' ', first_ind)  # finds a space
-                last_ind = raw_data[i].find(' ', first_ind+1)  # finds another space
-                if raw_data[i][first_ind+1:last_ind] == 'cnf':
-                    start = 1
-                    first_ind = last_ind  # finds a space
-                    last_ind = raw_data[i].find(' ', first_ind+1)  # finds another space
-                    num_vars = int(raw_data[i][first_ind+1:last_ind])  # saves number of symbols
-                    while raw_data[i][last_ind] == ' ':
-                        last_ind += 1
-                    num_clauses = int(raw_data[i][last_ind:])  # saves number of clauses
-                    # start assignment here!
-                    clause=[[] for r in range(0,num_clauses)]  # preallocation of clauses
-                else:
-                    print("Invalid data type: 'cnf' not found!")
-                    err = 1
-            elif start == 1:
-                word = findWord(raw_data[i], ' ', j)
-                if k >= num_clauses:
-                        print("Warning: Number of clauses does not match data!")
-                        break
-                while word != -1:
-                    if word[0] == 1:  # supposedly the last number on current line will be 0 - this number is discarded
-                        break
-                    else:
-                        clause[k].append(int(raw_data[i][word[1]:word[2]]))  # saves clause
-                        j = word[2]  # last checked index
-                    word = findWord(raw_data[i], ' ', j)
-                k += 1
-                if word == -1:
-                    print('Error while parsing raw data!')
-                    err = 1
-    if err == 0:
-        print('Data successfully loaded!')
-        return KB(num_clauses, num_vars, clause)  # Returns KB object
-    else:
-        return KB(-1, -1, -1)  # return error sentence
-
-def find_next(var, key, start):  # returns end_cond, w_start (inclusive) and w_end indices (exclusive); key is a string
-    """
-    Finds the indices where the next word is stored within var
-    :param var: Input Variable with type str
-    :param key: Specified symbol that separates words
-    :param start: Starting Index
-    :return: Tuple with status, first and last indices
-    """
-    endkey = '\n'  # line end character
-    j = start
-    while var[j] == key:
-        j += 1
-    w_start = j
-    w_end = var.find(key, w_start)
-    if w_end == -1:
-        w_end = var.find(endkey, w_start)
-        if w_end == -1:
-            return -1
-        elif w_end == w_start:
-            return -1
-        else:
-            interval = (1, w_start, w_end)  # in case end of line is reached
-            return interval
-    else:
-        interval = (0, w_start, w_end)
-        return interval
-
-def find_word(var, word, start):
-    # Finds the specified word inside var and returns the start and end indices
-    for i in range(len(var)):
-        if var[i]==word[0]:
-            if len(word)>1:
-                letter=i+1
-                found=1
-                for j in range(1,len(word)):
-                    if var[letter]!=word[j]
-                        found=0
-                        break
-                if found==1
-                    return [i,letter]
-    return []
-
-def write_file(filename, extension, algorithm, data):
-    """
-    Writes data to file using the DIMACS format
-    :param filename: name of the file that wil be created
-    :param extension: extension of the file that will be created
-    :param algorithm: algorithm used to obtain the data
-    :param data: Data object with parameters and results
-    :return: none
-    """
-    filename = 'sol_'+filename+'_'+algorithm+extension
-    output = open(filename, 'w')
-    print('Saving data...')
-    output.write('c\n')
-    line = 'c Authors: Vasco Rodrigues, Joao Oliveira\n'
-    output.write(line)
-    output.write('c\n')
-    line = 'c Algorithm: '+algorithm+'\n'
-    output.write(line)
-    output.write('c\n')
-    line = 's cnf '+str(data.solution)+' '+str(data.nvars)+' '+str(data.nclauses)+'\n'
-    output.write(line)
-    line = 't cnf '+str(data.solution)+' '+str(data.nvars)+' '+str(data.nclauses)
-    line += ' '+str(data.time)+'\n'
-    output.write(line)
-    if data.assignment:  # if there is a valid assignment, write it
-        for symbol in range(len(data.assignment)):
-            output.write('v '+str(data.assignment[symbol])+'\n')
-    output.close()
-    print(filename+' saved!')
-
-def save_data(filename, extension, algor, data):
-    filename = 'sol_'+filename+extension
-    output = open(filename, 'a')  # open file for appending
-    line = str(algor.name)+' '+str(data.nvars)+' '+str(data.nclauses)
-    line += ' '+str(data.ratio)+' '+str(data.time)+' '+str(algor.mrestarts)+' '+str(algor.mflips)+' ' + \
-        str(data.solution)+' '+str(algor.flips)
-    output.write(line+'\n')  # end with 0
-    output.close()
-    print('File saved')
-
-def load_data(filename, extension, algorithm):
-    filename = filename+extension
-    input = open(filename, 'r')  # open file for appending
-    raw_data=input.readlines()
-    input.close()
-    loaddata=[[] for i in range(8)]
-    l=0
-    for line in range(len(raw_data)):
-        if raw_data[line][0]!='c':
-            last=0
-            w=0
-            word = findWord(raw_data[line], ' ', last)
-            loaddata[l] = []  # to ensure it is empty
-            loaddata[l].append(raw_data[line][word[1]:word[2]])
-            last = word[2]
-            w+=1
-            if loaddata[l][0] == algorithm:
-                word = findWord(raw_data[line], ' ', last)
-                while word != -1:
-                    if word == 1:
-                        break
-                    elif w == 7:
-                        loaddata[l].append(bool(raw_data[line][word[1]:word[2]]))
-                        last = word[2]
-                        word = findWord(raw_data[line], ' ', last)
-                    elif w == 3 or w == 4:
-                        loaddata[l].append(float(raw_data[line][word[1]:word[2]]))
-                        last = word[2]
-                        word = findWord(raw_data[line], ' ', last)
-                    else:
-                        loaddata[l].append(int(raw_data[line][word[1]:word[2]]))
-                        last = word[2]
-                        word = findWord(raw_data[line], ' ', last)
-                    w+=1
-                l+=1
-    print(filename+' loaded!')
-    return loaddata
+# prog starts here!
 
 def variable_elimination(factors, elim_vars):
     #  TODO initial draft for the variable elimination function
@@ -216,6 +30,7 @@ def join_normalize(factors):
         table[1][i]=table[1][i]/total
     factor=factor.fill_table(table)
     return factor
+
 def sum_prod_elim(factors, elim_var):
     [elim_factors, indices]=find_dependent(factors, elim_var)  # TODO define as a method of factors
     indices.sort(reverse=True)  # sort in descending order
@@ -252,15 +67,15 @@ def no_rep(list_in):
           list_out.append(i)
     return list_out
 
-def find_equal(list1, list2, type):
+def find_equal(list1, list2, out_type):
     """
     Finds matching elements in both lists and returns either a list of matched elements or a list of indices
     :param list1: first list to compare
     :param list2: second list to compare
-    :param type: if ind='ind' is specified, the function returns matched indices instead of matched elements
+    :param out_type: if ind='ind' is specified, the function returns matched indices instead of matched elements
     :return: list of matched elements or list of indices, depending on the 'ind' parameter
     """
-    if type=='ind':
+    if out_type=='ind':
         indices=[[],[]]
         for i in range(len(list1)):
             for j in range(len(list2)):
@@ -383,7 +198,7 @@ class BN(object):
         self.__node[-1].node_id=node_id  # TODO check if necessary
 
 class Node(object):
-    def __init__(self,name,values,alias,parents):
+    def __init__(self,name,values,alias,parents,children):
         self.__name=name
         self.__values=values
         self.__alias=alias
@@ -391,6 +206,7 @@ class Node(object):
         self.__children=[]
         self.__id=-1
         self.__prob_table=[[], []]  # initialize empty table
+        self.__vars=[]
 
     def create_table(self, raw_table):
         """for i in range(len(raw_table)):
@@ -398,14 +214,16 @@ class Node(object):
                 self.__prob_table[0].append=raw_table[i]
             else:
                 self.__prob_table[1].append=raw_table[i]"""
-
+    def add_vars(self,vars):
+        self.__vars=vars
     def fill_table(self, in_table):
         self.__prob_table=deepcopy(in_table)
-
-    def update(self,parents,children):
+    #def update(self,parents,children):
         # TODO update - still not sure how to do it
     def def_id(self, new_id):
         self.__id=new_id
+    def get_vars(self):
+        return self.__vars
     def get_name(self):
         return self.__name
     def get_parents(self):
@@ -419,16 +237,32 @@ class Node(object):
     def get_alias(self):
         return self.__alias
 
+def nodes2factors(nodes):
+    """
+    Creates a list of Factor objects from a list of Node objects
+    :param nodes: list of Node objects
+    :return: list of Factor objects
+    """
+    factors = [[] for j in range(len(nodes))]
+    i = 0
+    for node in nodes:
+        factor = Factor('initial', node.get_vars())
+        factor.fill_table(node.get_table())
+        factors[i] = factor
+        i += 1
+    return factors
+
+
 class Factor(object):
-    def __init__(self,description,var):
-        self.__description=description
-        self.__var=var
-        self.__prob_table=[[], []]  # initialize empty table
+    def __init__(self, description, var):
+        self.__description = description
+        self.__var = var
+        self.__prob_table = [[], []]  # initialize empty table
 
     def fill_table(self, in_table):
         self.__prob_table=deepcopy(in_table)
-    """def update(self,parents,children):
-        # TODO update - still not sure how to do it"""
+    """def update(self,parents,children):"""
+        # TODO update - still not sure how to do it
     def eliminate(self,var):
         var_ind=self.__var.index(var)
         self.__var.pop(var_ind)
