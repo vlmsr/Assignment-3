@@ -20,6 +20,6 @@ factors = nodes2factors(nodes)
 blah = 1
 
 ordering = order(burgl, [johncalls, marycalls], nodes)
-
+blah = 1
 # TODO debugging table
     #in_table=[[['t','x'],['t','y'],['t','z'],['f','x'],['f','y'],['f','z']],[0.9,0.3,0.4,0.1,0.7,0.6]]

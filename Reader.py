@@ -80,11 +80,11 @@ def find_equal(list1, list2, out_type):
     :param out_type: if ind='ind' is specified, the function returns matched indices instead of matched elements
     :return: list of matched elements or list of indices, depending on the 'ind' parameter
     """
-    if out_type=='ind':
-        indices=[[],[]]
+    if out_type == 'ind':
+        indices = [[], []]
         for i in range(len(list1)):
             for j in range(len(list2)):
-                if list1[i]==list2[j]:
+                if list1[i] == list2[j]:
                     indices[0].append(i)
                     indices[1].append(j)
         return indices
@@ -92,7 +92,7 @@ def find_equal(list1, list2, out_type):
         list_out = []
         for i in range(len(list1)):
             for j in range(len(list2)):
-                if list1[i]==list2[j]:
+                if list1[i] == list2[j]:
                     list_out.append(list1[i])
         return list_out
 
@@ -154,7 +154,7 @@ def order(query, evidences, nodes):
     for evidence in evidences:
         evidence_name.append(evidence.get_name())  # list with names of evidence variables
     for node in nodes:
-        if not find_equal([query], [node.get_name()], 'val'):
+        if not find_equal([query.get_name()], [node.get_name()], 'val'):
             if not find_equal(evidence_name, [node.get_name()], 'val'):
                 hidden_vars.append(node)  # add node to list of variables to sort for elimination
     evaluation = heuristic(hidden_vars, query, evidence_name)
@@ -165,9 +165,15 @@ def order(query, evidences, nodes):
         for i in evaluation_range:
             elim_vars.append(evaluation.pop(0)[0])  # add best-rated var to the elimination list
             if evaluation:
-                evaluation = heuristic(evaluation[0], query, evidences)  # evaluate heuristic for the new situation
+                evaluation = heuristic(get_2nd_elem(evaluation, 0), query, evidences)  # evaluate heuristic for the new situation
                 evaluation.sort(key=lambda x: x[1])
     return elim_vars
+
+def get_2nd_elem(in_list, index):
+    out_list = []
+    for entry in in_list:
+        out_list.append(entry[index])
+    return out_list
 
 
 def heuristic(hidden_vars, query, evidence_name):
@@ -181,7 +187,7 @@ def heuristic(hidden_vars, query, evidence_name):
     evaluation = []
     for variable in hidden_vars:
         parents_ev = find_equal(variable.get_parents(), evidence_name, 'val')  # parents of 'variable' that are evidence
-        children_ev = find_equal(variable.get_parents(), evidence_name, 'val')  # children of 'variable' that are evidence
+        children_ev = find_equal(variable.get_children(), evidence_name, 'val')  # children of 'variable' that are evidence
         child_parents = []
         for child in variable.get_children():
             for h_var in hidden_vars:
@@ -190,8 +196,8 @@ def heuristic(hidden_vars, query, evidence_name):
             if find_equal([child], [query], 'var'):
                 child_parents.append(query.parents)
             child_parents = list(set(child_parents))  # remove repeated values
-        valid_neighbors = list(set(variable.get_parents()+parents_ev+variable.get_children()+children_ev+child_parents))
-        cost = len(valid_neighbors)
+        valid_neighbors = list(set(variable.get_parents()+variable.get_children()+child_parents))  # child_parents needs to be checked for repetitions
+        cost = len(valid_neighbors)-len(parents_ev+children_ev)  # change - parents_ev and children_ev need to be separated and subtracted after checking for repetitions
         evaluation.append([variable, cost])
     return evaluation
 
