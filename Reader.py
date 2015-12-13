@@ -14,8 +14,8 @@ def variable_elimination(factors, elim_vars):
             product=table_product(product,factor)
     return product"""
     # TODO verify if elim_vars were eliminated
-    factor = join_normalize(factors)
-    return factor
+    final_prob = join_normalize(factors)
+    return final_prob
 
 
 def join_normalize(factors):
@@ -168,6 +168,7 @@ def order(query, evidences, nodes):
                 evaluation = heuristic(get_2nd_elem(evaluation, 0), query, evidences)  # evaluate heuristic for the new situation
                 evaluation.sort(key=lambda x: x[1])
     return elim_vars
+
 
 def get_2nd_elem(in_list, index):
     out_list = []
