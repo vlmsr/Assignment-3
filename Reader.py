@@ -161,7 +161,7 @@ def order(query, evidences, nodes):
     #[[elim_var(i),cost(i)],...]=heuristic(hidden_vars)
     evaluation.sort(key=lambda x: x[1])
     if len(evaluation) > 1:
-        evaluation_range = list(range(len(evaluation)-1))  # auxiliary variable
+        evaluation_range = list(range(len(evaluation)))  # auxiliary variable
         for i in evaluation_range:
             elim_vars.append(evaluation.pop(0)[0])  # add best-rated var to the elimination list
             if evaluation:
