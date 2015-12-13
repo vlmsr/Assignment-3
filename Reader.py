@@ -56,7 +56,7 @@ def find_dependent(factors, var):
     dep_factors = []
     dep_indices = []
     for i in range(len(factors)):
-        ind = find_equal(factors[i], [var], 'ind')  # return matching indices
+        ind = find_equal(factors[i].get_vars(), [var], 'ind')  # return matching indices
         if ind:
             dep_factors += factors[ind]  # concatenate matching factors
             dep_indices += ind
@@ -149,7 +149,7 @@ def order(query, evidences, nodes):
     """
     elim_vars = []
     hidden_vars = []
-    # create list elim_vars of vars that are just Hidden Vars (not Query or Evidence)
+    # create list elim_vars of Hidden Vars (not Query or Evidence)
     evidence_name=[]
     for evidence in evidences:
         evidence_name.append(evidence.get_name())  # list with names of evidence variables
@@ -191,13 +191,18 @@ def heuristic(hidden_vars, query, evidence_name):
         child_parents = []
         for child in variable.get_children():
             for h_var in hidden_vars:
-                if find_equal([child], [h_var], 'var'):
+                if find_equal([child], [h_var.get_name()], 'var'):
                     child_parents.append(h_var.parents)
-            if find_equal([child], [query], 'var'):
-                child_parents.append(query.parents)
+            if find_equal([child], [query.get_name()], 'var'):
+                child_parents.append(query.get_parents())
             child_parents = list(set(child_parents))  # remove repeated values
-        valid_neighbors = list(set(variable.get_parents()+variable.get_children()+child_parents))  # child_parents needs to be checked for repetitions
-        cost = len(valid_neighbors)-len(parents_ev+children_ev)  # change - parents_ev and children_ev need to be separated and subtracted after checking for repetitions
+        equal = find_equal(child_parents, parents_ev+children_ev,'ind')  # check for equal values in both lists
+        if equal:
+            equal[0].sort(reverse=True)
+            for index in equal[0]:  # this assumes a parent can never be also a child of the current node
+                child_parents.pop(index)
+        valid_neighbors = list(set(variable.get_parents()+variable.get_children()+child_parents))
+        cost = len(valid_neighbors)-len(parents_ev+children_ev)
         evaluation.append([variable, cost])
     return evaluation
 
@@ -285,26 +290,27 @@ def nodes2factors(nodes):
 
 
 class Factor(object):
-    def __init__(self, description, var):
+    def __init__(self, description, var_list):
         self.__description = description
-        self.__var = var
+        self.__vars = var_list
         self.__prob_table = [[], []]  # initialize empty table
 
     def fill_table(self, in_table):
-        self.__prob_table=deepcopy(in_table)
-    """def update(self,parents,children):"""
-        # TODO update - still not sure how to do it
-    def eliminate(self,var):
-        var_ind=self.__var.index(var)
-        self.__var.pop(var_ind)
+        self.__prob_table = deepcopy(in_table)
+
+    def eliminate(self, var):
+        var_ind = self.__vars.index(var)
+        self.__vars.pop(var_ind)
         for i in range(len(self.__prob_table[0])):
             self.__prob_table[0][i].pop(var_ind)
         # TODO don't forget to test!
 
     def get_description(self):
         return self.__description
+
     def get_vars(self):
-        return self.__var
+        return self.__vars
+
     def get_table(self):
         return self.__prob_table
 
