@@ -23,7 +23,7 @@ def join_normalize(factors):
     factor = []
     if len(factors)>1:
         for factor in factors[1:]:  # product of factors to join
-            new_factor = table_product(new_factor, factor)
+            new_factor = table_product(new_factor, factor)  # TODO ERROR HERE! (an entry was not correctly deleted from the table)
     new_factor = table_product(new_factor, factor)
     table = new_factor.get_table()
     total = sum(table[1])
@@ -35,15 +35,17 @@ def join_normalize(factors):
 
 def sum_prod_elim(factors, elim_var):
     [elim_factors, indices] = find_dependent(factors, elim_var)  # TODO define as a method of factors
-    indices.sort(reverse=True)  # sort in descending order
-    for i in indices:
-        factors.pop(i)  # eliminate factors to join
-    new_factor = elim_factors[0]
-    if len(elim_factors) > 1:
-        for factor in elim_factors[1:]:  # product of factors to eliminate
-            new_factor = table_product(new_factor, factor)
-    new_factor = marginalize(new_factor, elim_var)
-    return factors+new_factor  # TODO check concatenation method
+    if elim_factors:
+        indices.sort(reverse=True)  # sort in descending order
+        for i in indices:
+            factors.pop(i)  # eliminate factors to join
+        new_factor = elim_factors[0]
+        if len(elim_factors) > 1:
+            for factor in elim_factors[1:]:  # product of factors to eliminate
+                new_factor = table_product(new_factor, factor)
+        new_factor = marginalize(new_factor, elim_var)
+        factors.append(new_factor)
+    return factors  # TODO check concatenation method
 
 
 def find_dependent(factors, var):
@@ -57,9 +59,10 @@ def find_dependent(factors, var):
     dep_indices = []
     for i in range(len(factors)):
         ind = find_equal(factors[i].get_vars(), [var], 'ind')  # return matching indices
-        if ind:
-            dep_factors += factors[ind]  # concatenate matching factors
-            dep_indices += ind
+        if ind[0]:
+            for j in ind:
+                dep_factors.append(factors[j])  # concatenate matching factors
+                dep_indices.append(j)
     return [dep_factors, dep_indices]
 
 
@@ -98,8 +101,14 @@ def find_equal(list1, list2, out_type):
 
 
 def table_product(factor_1, factor_2):
+    """
+    Computes the product between the probability tables of 2 factors and returns a new factor with that table
+    :param factor_1: 1st factor (Factor object)
+    :param factor_2: 2nd factor (Factor object)
+    :return: resulting factor (Factor object)
+    """
     dependent = find_equal(factor_1.get_vars(), factor_2.get_vars(), 'ind')  # return matched indices
-    new_factor = Factor('prod', no_rep(factor_1.get_vars() + factor_2.getvars()))
+    new_factor = Factor('prod', no_rep(factor_1.get_vars() + factor_2.get_vars()))
     table_1 = factor_1.get_table()
     table_2 = factor_2.get_table()
     new_table = [[],[]]
@@ -108,9 +117,12 @@ def table_product(factor_1, factor_2):
         prob1 = table_1[1][line1]
         for line2 in range(len(table_2[1])):
             assign2 = table_1[0][line2]
-            prob2 = table_1[1][line2]
-            if [assign1[i] for i in dependent[0]] == [assign2[j] for j in dependent[1]]:
-                new_table[0].append(no_rep(assign1+assign2))
+            prob2 = table_1[1][line2]  # TODO the table is not being updated correctly - lost vars?
+            if [assign1[i] for i in dependent[0]] == [assign2[j] for j in dependent[1]]:  # if equal assignments found
+                erase = sorted(dependent[1], reverse=True)
+                for elem in erase:
+                    assign2.pop(elem)
+                new_table[0].append(assign1+assign2)
                 new_table[1].append(prob1*prob2)
     new_factor.fill_table(new_table)
     return new_factor
@@ -119,12 +131,12 @@ def table_product(factor_1, factor_2):
 # TODO find_equal() must be able to accept both inputs as lists of strings, not just one list and a string
 
 
-def marginalize(factor, elim_var):
+def marginalize(factor, elim_var):  # TODO CHECK THIS FUNCTION! Check for badly deleted / empty table entries (?)
     """
-    Marginalizes Variable elim_var
-    :param factor: Factor to make changes
-    :param elim_var: Variable to Eliminate
-    :return: Updated Factor
+    Marginalizes specified variable
+    :param factor: factor from which the variable will be eliminated (Factor object)
+    :param elim_var: name of the variable to eliminate (string)
+    :return: updated factor (Factor object)
     """
     factor.eliminate(elim_var)
     new_table = [[], []]
@@ -193,9 +205,9 @@ def heuristic(hidden_vars, query, evidence_name):
         for child in variable.get_children():
             for h_var in hidden_vars:
                 if find_equal([child], [h_var.get_name()], 'var'):
-                    child_parents.append(h_var.parents)
+                    child_parents += h_var.get_parents()
             if find_equal([child], [query.get_name()], 'var'):
-                child_parents.append(query.get_parents())
+                child_parents += query.get_parents()
             child_parents = list(set(child_parents))  # remove repeated values
         equal = find_equal(child_parents, parents_ev+children_ev,'ind')  # check for equal values in both lists
         if equal:
