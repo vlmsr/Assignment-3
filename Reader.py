@@ -121,7 +121,7 @@ def table_product(factor_1, factor_2):
 
 def marginalize(factor, elim_var):
     """
-    Marginalize Variable elim_var
+    Marginalizes Variable elim_var
     :param factor: Factor to make changes
     :param elim_var: Variable to Eliminate
     :return: Updated Factor
@@ -218,7 +218,7 @@ class Node(object):
         self.__values = values
         self.__alias = alias
         self.__parents = parents  # parents' alias
-        self.__children = []
+        self.__children = children
         self.__id = -1
         self.__prob_table = [[], []]  # initialize empty table
         self.__vars = []
@@ -231,6 +231,12 @@ class Node(object):
                 self.__prob_table[1].append=raw_table[i]"""
     def add_vars(self, vars):
         self.__vars = vars
+
+    def add_child(self, child):
+        self.__children.append(child)
+
+    def add_children(self, children):
+        self.__children += children
 
     def fill_table(self, in_table):
         self.__prob_table = deepcopy(in_table)
