@@ -187,3 +187,10 @@ def load_data(filename, extension, algorithm):
                 l+=1
     print(filename+' loaded!')
     return loaddata
+
+# TODO debugging table
+    #in_table=[[['t','x'],['t','y'],['t','z'],['f','x'],['f','y'],['f','z']],[0.9,0.3,0.4,0.1,0.7,0.6]]
+
+# TODO table[0] has the variable instance strings; table[1] corresponds to the probability values
+# TODO define: table_product(), find_dependent(), find_equal(), marginalize()
+# TODO find_equal() must be able to accept both inputs as lists of strings, not just one list and a string

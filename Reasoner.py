@@ -1,8 +1,23 @@
-#  TODO use Python String find() method
+
 from copy import deepcopy
 
 
-# prog starts here!
+def propagate_evidence(factors, evidence):
+    evidence_names = []
+    for node in evidence[0]:
+        evidence_names.append(node.get_name())
+    for factor in factors:
+        equal = find_equal(factor.get_vars(), evidence_names, 'ind')
+        if equal[0]:
+            temp_table = [[], []]
+            for var0, var1 in zip(equal[0], equal[1]):
+                    for line, line2 in zip(factor.get_table()[0], factor.get_table()[1]):
+                        if line[var0] == evidence[1][var1]:
+                            temp_table[0].append(line)
+                            temp_table[1].append(line2)
+            factor.fill_table(temp_table)
+    return factors
+
 
 def variable_elimination(factors, elim_vars):
     """
@@ -44,7 +59,7 @@ def sum_prod_elim(factors, elim_var):
                 new_factor = table_product(new_factor, factor)
         new_factor = marginalize(new_factor, elim_var)
         factors.append(new_factor)
-    return factors  # TODO check concatenation method
+    return factors
 
 
 def find_dependent(factors, var):
@@ -115,7 +130,7 @@ def table_product(factor_1, factor_2):
         prob1 = deepcopy(table_1[1][line1])
         for line2 in range(len(table_2[1])):
             assign2 = deepcopy(table_2[0][line2])
-            prob2 = deepcopy(table_2[1][line2])  # TODO the table is not being updated correctly - lost vars?
+            prob2 = deepcopy(table_2[1][line2])
             if [assign1[i] for i in dependent[0]] == [assign2[j] for j in dependent[1]]:  # if equal assignments found
                 erase = sorted(dependent[1], reverse=True)  # dependent elements to erase from one of the tables
                 for elem in erase:
@@ -124,12 +139,10 @@ def table_product(factor_1, factor_2):
                 new_table[1].append(prob1*prob2)
     new_factor.fill_table(new_table)
     return new_factor
-# TODO table[0] has the variable instance strings; table[1] corresponds to the probability values
-# TODO define: table_product(), find_dependent(), find_equal(), marginalize()
-# TODO find_equal() must be able to accept both inputs as lists of strings, not just one list and a string
 
 
-def marginalize(factor, elim_var):  # TODO CHECK THIS FUNCTION! Check for badly deleted / empty table entries (?)
+
+def marginalize(factor, elim_var):
     """
     Marginalizes specified variable
     :param factor: factor from which the variable will be eliminated (Factor object)
@@ -238,7 +251,7 @@ class BN(object):
         self.__node=[]
     def addNode(self,node_id,name,values,alias,parents):
         self.__node.append(Node(name,values,alias,parents))
-        self.__node[-1].node_id=node_id  # TODO check if necessary
+        self.__node[-1].node_id=node_id
 
 
 class Node(object):
@@ -269,8 +282,6 @@ class Node(object):
 
     def fill_table(self, in_table):
         self.__prob_table = deepcopy(in_table)
-    #def update(self,parents,children):
-        # TODO update - still not sure how to do it
 
     def def_id(self, new_id):
         self.__id = new_id
@@ -327,7 +338,6 @@ class Factor(object):
         self.__vars.pop(var_ind)
         for i in range(len(self.__prob_table[0])):
             self.__prob_table[0][i].pop(var_ind)
-        # TODO don't forget to test!
 
     def get_description(self):
         return self.__description
@@ -338,5 +348,4 @@ class Factor(object):
     def get_table(self):
         return self.__prob_table
 
-    # TODO debugging table
-    #in_table=[[['t','x'],['t','y'],['t','z'],['f','x'],['f','y'],['f','z']],[0.9,0.3,0.4,0.1,0.7,0.6]]
+
