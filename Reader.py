@@ -5,36 +5,35 @@ from copy import deepcopy
 # prog starts here!
 
 def variable_elimination(factors, elim_vars):
-    #  TODO initial draft for the variable elimination function
+    """
+    Variable Elimination algorithm
+    :param factors: initial factors (list of Factor objects)
+    :param elim_vars: ordering of variables to eliminate (list of Node objects)
+    :return: final factor with query probability (Factor object)
+    """
     for i in range(len(elim_vars)):
         factors = sum_prod_elim(factors, elim_vars[i])
-    """product=factors[0]
-    if len(factors)>1:  # TODO shall we keep this condition? It will hide possible errors, difficult debugging!
-        for factor in factors:  # TODO check
-            product=table_product(product,factor)
-    return product"""
-    # TODO verify if elim_vars were eliminated
     final_prob = join_normalize(factors)
     return final_prob
 
 
 def join_normalize(factors):
-    new_factor = factors[0]
+    new_factor = deepcopy(factors[0])
     factor = []
     if len(factors)>1:
         for factor in factors[1:]:  # product of factors to join
-            new_factor = table_product(new_factor, factor)  # TODO ERROR HERE! (an entry was not correctly deleted from the table)
+            new_factor = table_product(new_factor, factor)
     new_factor = table_product(new_factor, factor)
     table = new_factor.get_table()
     total = sum(table[1])
     for i in range(len(table[1])):
         table[1][i] = table[1][i]/total
-    factor = factor.fill_table(table)
-    return factor
+    new_factor.fill_table(table)
+    return new_factor
 
 
 def sum_prod_elim(factors, elim_var):
-    [elim_factors, indices] = find_dependent(factors, elim_var)  # TODO define as a method of factors
+    [elim_factors, indices] = find_dependent(factors, elim_var.get_name())
     if elim_factors:
         indices.sort(reverse=True)  # sort in descending order
         for i in indices:
@@ -51,18 +50,17 @@ def sum_prod_elim(factors, elim_var):
 def find_dependent(factors, var):
     """
     Finds factors that depend on the specified variable
-    :param factors: Factor-type objects to search
+    :param factors: list of Factor-type objects to search
     :param var: variable to search for
-    :return: dependent factors (Factor objects list) and indices of dependent factors (list)
+    :return: dependent factors (Factor objects list) and indices of dependent factors (list) from the 'factors' list
     """
     dep_factors = []
     dep_indices = []
     for i in range(len(factors)):
         ind = find_equal(factors[i].get_vars(), [var], 'ind')  # return matching indices
         if ind[0]:
-            for j in ind:
-                dep_factors.append(factors[j])  # concatenate matching factors
-                dep_indices.append(j)
+            dep_factors.append(factors[i])  # concatenate matching factors
+            dep_indices.append(i)
     return [dep_factors, dep_indices]
 
 
@@ -113,13 +111,13 @@ def table_product(factor_1, factor_2):
     table_2 = factor_2.get_table()
     new_table = [[],[]]
     for line1 in range(len(table_1[1])):
-        assign1 = table_1[0][line1]
-        prob1 = table_1[1][line1]
+        assign1 = deepcopy(table_1[0][line1])
+        prob1 = deepcopy(table_1[1][line1])
         for line2 in range(len(table_2[1])):
-            assign2 = table_1[0][line2]
-            prob2 = table_1[1][line2]  # TODO the table is not being updated correctly - lost vars?
+            assign2 = deepcopy(table_2[0][line2])
+            prob2 = deepcopy(table_2[1][line2])  # TODO the table is not being updated correctly - lost vars?
             if [assign1[i] for i in dependent[0]] == [assign2[j] for j in dependent[1]]:  # if equal assignments found
-                erase = sorted(dependent[1], reverse=True)
+                erase = sorted(dependent[1], reverse=True)  # dependent elements to erase from one of the tables
                 for elem in erase:
                     assign2.pop(elem)
                 new_table[0].append(assign1+assign2)
@@ -138,14 +136,24 @@ def marginalize(factor, elim_var):  # TODO CHECK THIS FUNCTION! Check for badly 
     :param elim_var: name of the variable to eliminate (string)
     :return: updated factor (Factor object)
     """
-    factor.eliminate(elim_var)
+    factor.eliminate(elim_var.get_name())
     new_table = [[], []]
     table = factor.get_table()
+    tabu = [False for i in range(len(table[0]))]
+    new_line = 0
     for line in range(len(table[0])):
-        for line1 in range(len(table[0])):
-            if line != line1 and table[0][line] == table[0][line1]:
-                new_table[0].append(table[0][line])
-                new_table[1].append(table[1][line]+table[1][line1])
+        if not tabu[line]:
+            tabu[line] = True
+            for line1 in range(len(table[0])):
+                if not tabu[line1]:
+                    if table[0][line] == table[0][line1]:
+                        tabu[line1] = True
+                        if len(new_table[0]) == new_line:
+                            new_table[0].append(table[0][line])
+                            new_table[1].append(table[1][line]+table[1][line1])
+                        else:
+                            new_table[1][new_line] += new_table[1][line1]  # sum the matched values
+            new_line += 1  # increment new_table index
     factor.fill_table(new_table)
     return factor
 
@@ -204,16 +212,19 @@ def heuristic(hidden_vars, query, evidence_name):
         child_parents = []
         for child in variable.get_children():
             for h_var in hidden_vars:
-                if find_equal([child], [h_var.get_name()], 'var'):
-                    child_parents += h_var.get_parents()
-            if find_equal([child], [query.get_name()], 'var'):
+                if find_equal([child], [h_var.get_name()], 'var'):  # search the hidden variables for the child node
+                    child_parents += h_var.get_parents()  # add parents of children node to list
+            if find_equal([child], [query.get_name()], 'var'):    # check it h_var matches the query var
                 child_parents += query.get_parents()
             child_parents = list(set(child_parents))  # remove repeated values
         equal = find_equal(child_parents, parents_ev+children_ev,'ind')  # check for equal values in both lists
-        if equal:
+        if equal[0]:
             equal[0].sort(reverse=True)
             for index in equal[0]:  # this assumes a parent can never be also a child of the current node
                 child_parents.pop(index)
+        equal = find_equal(child_parents, [variable.get_name()], 'ind')  # check if the current variable is included in the list
+        if equal[0]:
+            child_parents.pop(equal[0][0])  # eliminate the variable that shouldn't be in the list
         valid_neighbors = list(set(variable.get_parents()+variable.get_children()+child_parents))
         cost = len(valid_neighbors)-len(parents_ev+children_ev)
         evaluation.append([variable, cost])
